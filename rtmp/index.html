@@ -34,7 +34,6 @@
       const form = document.getElementById("sign-up-form");
       form.addEventListener('submit', (e) =>{
         e.preventDefault();
-        console.log(document.getElementsByName("password")[0].value);
         fetch(api, {
           method: 'POST',
           headers: {
