@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Stream</title>
+  </head>
+  <body>
+    <form action="" id="sign-up-form">
+      <input type="text" name="username">
+      <input type="text" name="password">
+      <button type="submit">Envoyer</button>
+    </form>
+    <h2>Live Stream</h2>
+    <video id="video" width="800" controls></video>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Or if you want a more recent alpha version -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
+    <script type="text/javascript">
+      var video = document.getElementById("video");
+      var videoSrc = "http://localhost:8080/hls/1080.m3u8";
+      if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+      }
+      else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = videoSrc;
+      }
+
+
+      const api = "http://localhost:3000/users";
+      const form = document.getElementById("sign-up-form");
+      form.addEventListener('submit', (e) =>{
+        e.preventDefault();
+        console.log(document.getElementsByName("password")[0].value);
+        fetch(api, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: document.getElementsByName("username")[0].value,
+            password: document.getElementsByName("password")[0].value,
+          })
+          
+        }).then(res => res.json()).then(res => {
+          alert(res._id);
+        });
+      })
+
+
+    </script>
+  </body>
+</html>
