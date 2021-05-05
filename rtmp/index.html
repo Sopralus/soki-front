@@ -8,19 +8,21 @@
   </head>
   <body>
     <h1 id="bonjour-prenom"></h1>
-    <p>Sign up</p>
     <form action="" method="post" id="sign-up-form">
+      <p>Sign up</p>
       <input type="text" name="username">
       <input type="text" name="password">
       <button type="submit">Envoyer</button>
     </form>
 
-    <p>Sign in</p>
     <form action="" method="GET" id="sign-in-form">
+      <p>Sign in</p>
       <input type="text" name="username-in">
       <input type="text" name="password-in">
       <button type="submit">Envoyer</button>
     </form>
+
+    <a style='display: none;' id="unlog" href="#">Se déconnecter</a>
 
     <h2>Live Stream</h2>
     <video id="video" width="800" controls></video>
@@ -40,8 +42,24 @@
     <script type="text/javascript">
 
       let bonjour = document.getElementById("bonjour-prenom");
+      const formin = document.getElementById("sign-in-form");
+      const formup = document.getElementById("sign-up-form");
+      var unlog = document.getElementById('unlog');
+
       if(localStorage.getItem('username')){
         bonjour.textContent = 'Bonjour ' + localStorage.getItem('username');
+      }
+
+      unlog.addEventListener('click', function() {
+        localStorage.removeItem('username');
+        localStorage.removeItem('id');
+        document.location.reload();
+      })
+
+      function removeForms(){
+        formup.style.display = "none";
+        formin.style.display = "none";
+        unlog.style.display = 'block';
       }
 
       // if local storage pas vide => connect
@@ -60,7 +78,6 @@
 
 
       const apiup = "http://localhost:3000/users";
-      const formup = document.getElementById("sign-up-form");
       formup.addEventListener('submit', (e) =>{
         e.preventDefault();
         fetch(apiup, {
@@ -77,11 +94,11 @@
           bonjour.textContent = "Bonjour " + res.username;
           localStorage.setItem('username', res.username);
           localStorage.setItem('id', res._id);
+          removeForms();
         });
       });
 
       const apiin = "http://localhost:3000/users/auth";
-      const formin = document.getElementById("sign-in-form");
       formin.addEventListener('submit', (e) =>{
         e.preventDefault();
         fetch(apiin, {
@@ -107,6 +124,7 @@
             // stock id et le username dans local storage
             localStorage.setItem('username', res.username);
             localStorage.setItem('id', res._id);
+            removeForms();
           })
         });
       });
