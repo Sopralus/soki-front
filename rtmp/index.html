@@ -7,17 +7,46 @@
     <title>Live Stream</title>
   </head>
   <body>
-    <form action="" id="sign-up-form">
+    <h1 id="bonjour-prenom"></h1>
+    <p>Sign up</p>
+    <form action="" method="post" id="sign-up-form">
       <input type="text" name="username">
       <input type="text" name="password">
       <button type="submit">Envoyer</button>
     </form>
+
+    <p>Sign in</p>
+    <form action="" method="GET" id="sign-in-form">
+      <input type="text" name="username-in">
+      <input type="text" name="password-in">
+      <button type="submit">Envoyer</button>
+    </form>
+
     <h2>Live Stream</h2>
     <video id="video" width="800" controls></video>
+
+    <!-- Le chat qui marchera peut être un jour -->
+    <ul id="messages" style="height: 100px;"></ul>
+    <form id="chat-form" action="">
+      <input id="chat-input" autocomplete="off" />
+      <button>Send</button>
+    </form>
+
+
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Or if you want a more recent alpha version -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
+    <!-- <script src="../../../soki/soki-back/node_modules/socket.io/client-dist/socket.io.js"></script> -->
     <script type="text/javascript">
+
+      let bonjour = document.getElementById("bonjour-prenom");
+      if(localStorage.getItem('username')){
+        bonjour.textContent = 'Bonjour ' + localStorage.getItem('username');
+      }
+
+      // if local storage pas vide => connect
+      // suppression du form de connexion
+      
       var video = document.getElementById("video");
       var videoSrc = "http://localhost:8080/hls/1080.m3u8";
       if (Hls.isSupported()) {
@@ -30,11 +59,11 @@
       }
 
 
-      const api = "http://localhost:3000/users";
-      const form = document.getElementById("sign-up-form");
-      form.addEventListener('submit', (e) =>{
+      const apiup = "http://localhost:3000/users";
+      const formup = document.getElementById("sign-up-form");
+      formup.addEventListener('submit', (e) =>{
         e.preventDefault();
-        fetch(api, {
+        fetch(apiup, {
           method: 'POST',
           headers: {
             "Content-Type": "application/json"
@@ -45,10 +74,65 @@
           })
           
         }).then(res => res.json()).then(res => {
-          alert(res._id);
+          bonjour.textContent = "Bonjour " + res.username;
+          localStorage.setItem('username', res.username);
+          localStorage.setItem('id', res._id);
         });
-      })
+      });
 
+      const apiin = "http://localhost:3000/users/auth";
+      const formin = document.getElementById("sign-in-form");
+      formin.addEventListener('submit', (e) =>{
+        e.preventDefault();
+        fetch(apiin, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: document.getElementsByName("username-in")[0].value,
+            password: document.getElementsByName("password-in")[0].value,
+          })   
+
+        }).then(res => res.json()).then(res => {
+          // ICI nous avons l'identifiant de la personne essayant de se connecter -> res.toker
+          console.log(res.toker);
+          fetch(apiup + '/' + res.toker, {
+            method: 'GET',
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }).then(res => res.json()).then(res => {
+            bonjour.textContent = "Bonjour " + res.username;
+            // stock id et le username dans local storage
+            localStorage.setItem('username', res.username);
+            localStorage.setItem('id', res._id);
+          })
+        });
+      });
+
+      
+      // Partie sur le chat
+      // var socket = io();
+
+      // var messages = document.getElementById('messages');
+      // var formchat = document.getElementById('chat-form');
+      // var inputchat = document.getElementById('chat-input');
+
+      // formchat.addEventListener('submit', function(e) {
+      //   e.preventDefault();
+      //   if (inputchat.value) {
+      //     socket.emit('chat message', inputchat.value);
+      //     inputchat.value = '';
+      //   }
+      // });
+
+      // socket.on('chat message', function(msg) {
+      //   var item = document.createElement('li');
+      //   item.textContent = msg;
+      //   messages.appendChild(item);
+      //   window.scrollTo(0, document.body.scrollHeight);
+      // });
 
     </script>
   </body>
