@@ -38,6 +38,7 @@ app.post("/auth", function (req, res) {
 
   /* Reject the stream */
   res.status(403).send();
+  
 });
 
 app.listen(8000, function () {

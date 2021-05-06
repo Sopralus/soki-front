@@ -7,6 +7,7 @@
     <title>Live Stream</title>
   </head>
   <body>
+    <header>
     <h1 id="bonjour-prenom"></h1>
     <form action="" method="post" id="sign-up-form">
       <p>Sign up</p>
@@ -23,22 +24,32 @@
     </form>
 
     <a style='display: none;' id="unlog" href="#">Se déconnecter</a>
+    </header>
+
 
     <h2>Live Stream</h2>
-    <video id="video" width="800" controls></video>
 
-    <!-- Le chat qui marchera peut être un jour -->
-    <ul id="messages" style="height: 100px;"></ul>
-    <form id="chat-form" action="">
-      <input id="chat-input" autocomplete="off" />
-      <button>Send</button>
-    </form>
+    <section style="display: flex;">
+      <ul id="stream-onglet">
+      </ul>
+      <video id="video" width="800" controls></video>
+      <video width="800" controls></video>
 
+      <!-- Le chat qui marchera peut être un jour -->
+      <div style="width: 300px;">
+        <ul id="messages" style="height: 100%; background-color: lightgray; padding:10px"></ul>
+        <form id="chat-form" action="">
+          <input id="chat-input" autocomplete="off" />
+          <button>Send</button>
+        </form>
+      </div>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Or if you want a more recent alpha version -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
     <script src="../../../soki/soki-back/node_modules/socket.io/client-dist/socket.io.js"></script>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
     <script type="text/javascript">
 
       let bonjour = document.getElementById("bonjour-prenom");
@@ -49,6 +60,7 @@
 
       if(localStorage.getItem('username')){
         bonjour.textContent = 'Bonjour ' + localStorage.getItem('username');
+        removeForms();
       }
 
       unlog.addEventListener('click', function() {
@@ -64,11 +76,11 @@
         unlog.style.display = 'block';
       }
 
-      // if local storage pas vide => connect
-      // suppression du form de connexion
       
+      let ongletStream = document.getElementById("stream-onglet");
+            
       var video = document.getElementById("video");
-      var videoSrc = "http://localhost:8080/hls/1080.m3u8";
+      var videoSrc = "http://localhost:8080/hls/robin.m3u8";
       if (Hls.isSupported()) {
         var hls = new Hls();
         hls.loadSource(videoSrc);
@@ -136,7 +148,10 @@
 
       
       // Partie sur le chat
-      var socket = io("http://localhost:3000");
+      var socket = io("http://localhost:3000", {
+        withCredentials: true,
+        "Access-Control-Allow-Credentials": true
+      });
 
       var messages = document.getElementById('messages');
       var formchat = document.getElementById('chat-form');
@@ -152,7 +167,8 @@
 
       socket.on('chat message', function(msg) {
         var item = document.createElement('li');
-        item.textContent = msg;
+        item.style.listStyle = "none";
+        item.innerHTML = "<p style='margin:0; color:blue; font-size:12px'>" + localStorage.getItem('username') + "</p><p style='margin:0'>" + msg + "</p>";
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
       });
