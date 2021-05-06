@@ -1,0 +1,4 @@
+build:
+  docker:
+    web: rtmp/Dockerfile
+    worker: auth/Dockerfile
