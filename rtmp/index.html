@@ -8,6 +8,7 @@
     <link href="main.css" rel="stylesheet">
   </head>
   <body>
+    <!-- Header avec forms de connexion -->
     <header>
       <div class="logo">
         <h1>Soki</h1>
@@ -30,6 +31,8 @@
       <a style='display: none;' id="unlog" href="#">Se déconnecter</a>
     </header>
 
+
+    <!-- Video et chat du stream -->
     <section class="groupes-stream">
       <h2 id='room-name'>Live Stream</h2>
       <ul id="stream-onglet">
@@ -45,7 +48,7 @@
       
       <video id="video" width="800" controls></video>
 
-      <!-- Le chat qui marchera peut être un jour -->
+      <!-- Le chat  -->
       <div class="chat-space">
         <div id="rooms">
           <ul id="room1" class="chat" ></ul>
@@ -61,13 +64,13 @@
       </div>
     </section>
 
+    <!-- Javascript -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- Or if you want a more recent alpha version -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.10.1/qs.min.js" integrity="sha512-aTKlYRb1QfU1jlF3k+aS4AqTpnTXci4R79mkdie/bp6Xm51O5O3ESAYhvg6zoicj/PD6VYY0XrYwsWLcvGiKZQ==" crossorigin="anonymous"></script>
-    <!-- <script src="../../../soki/soki-back/node_modules/socket.io/client-dist/socket.io.js"></script> -->
     <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script type="text/javascript">
+
+      // Definition des variables
 
       let bonjour = document.getElementById("bonjour-prenom");
       const formin = document.getElementById("sign-in-form");
@@ -79,15 +82,20 @@
       var randStreamKey = Math.random().toString(20).substr(2, 10); 
       let name = "anonymous";
 
+      // Si l'utilisateur s'est deja connecté, récupération de ses informations
       if(localStorage.getItem('username')){
         bonjour.textContent = 'Bonjour ' + localStorage.getItem('username');
         name = localStorage.getItem('username');
-        // socket.emit('username', localStorage.getItem('username'));
         removeForms();
       }
 
       const onglets = document.getElementsByClassName('onglet');      
-            
+      
+
+      // Affichage de la vidéo
+      // Par faute de temps, la vidéo affichée ici est un modèle par défaut
+      // La vérification de l'existance de la vidéo n'est pas faite
+      // Si des personnes streament, le traitement se fait plus loin
       var video = document.getElementById("video");
       var videoSrc = "http://localhost:8080/hls/robin.m3u8";
       if (Hls.isSupported()) {
@@ -107,17 +115,17 @@
       });
       var room = 'room1';
 
-      // socket.on('id', (id) => {
-      //   room = id;
-      // });
-
+      // Définition des variables pour le chat
       var messages = document.getElementById(room);
       var formchat = document.getElementById('chat-form');
       var inputchat = document.getElementById('chat-input');
 
+      // Envoi des informations de l'utilisateur
       socket.emit('username', name);
       socket.emit('joinRoom', { name, room });
 
+      // Traitement du changement de "room"
+      // traitement de la vidéo si un streamer est actif
       for(let i = 0 ; i < onglets.length ; i++){
         onglets[i].addEventListener('click', function(e){
           e.preventDefault();
@@ -142,22 +150,17 @@
           }
           else if (video.canPlayType("application/vnd.apple.mpegurl")) {
             video.src = videoSrc;
-      }
-
-
-          //document.location = "http://localhost/soki/soki-front/rtmp/index.html?room=" + room;
+          }
         })
       }
 
+      // Changement de room de l'utilisateur
       socket.on('roomUsers', ( room ) => {
         outputRoomName(room);
       });
 
-      socket.on('allUsers', ({ room, users }) =>{
-        // outputUsers(room, users);
-      })
-      
 
+      // Traitement du formulaire de chat
       formchat.addEventListener('submit', function(e) {
         e.preventDefault();
         if (inputchat.value) {
@@ -166,19 +169,7 @@
         }
       });
 
-      socket.on('chat message', function(msg) {
-        var item = document.createElement('li');
-        item.style.listStyle = "none";
-        item.style.marginBottom = '5px';
-        item.innerHTML = 
-          "<p style='margin:0; font-size:12px'>" + msg.username + 
-          "<span style='margin-left:5px; color:salmon'> " + msg.time + 
-          "</span></p><p style='margin:0'>" + msg.text + "</p>";
-        messages = document.getElementById(room);
-        messages.appendChild(item);
-        messages.scrollTo(0, document.body.scrollHeight);
-      });
-
+      // Envoi du message dans le chat
       socket.on('message', message => {
         var item = document.createElement('li');
         item.style.listStyle = "none";
@@ -189,10 +180,10 @@
           "</span></p><p style='margin:0'>" + message.text + "</p>";
         messages = document.getElementById(room);
         messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+        messages.scrollTo(0, document.body.scrollHeight);
       })
 
-      // forms
+      // Traitement des formulaires d'inscription / connexion
       const apiup = "http://localhost:3000/users";
       formup.addEventListener('submit', (e) =>{
         e.preventDefault();
@@ -233,8 +224,6 @@
           })   
 
         }).then(res => res.json()).then(res => {
-          // ICI nous avons l'identifiant de la personne essayant de se connecter -> res.toker
-          console.log(res.toker);
           fetch(apiup + '/' + res.toker, {
             method: 'GET',
             headers: {
@@ -255,7 +244,8 @@
         });
       });
 
-      
+      // aurait du s'appeler logout : gère une déconnexion et
+      // permet à un utilisateur d'être "anonyme"
       unlog.addEventListener('click', function(e) {
         e.preventDefault();
         socket.emit('leaveRoom', room);
@@ -272,21 +262,24 @@
 
       })
 
+      // fonction qui supprime les formulaires lorsqu'un utilisateur
+      // est connecté
       function removeForms(){
         formup.style.display = "none";
         formin.style.display = "none";
         unlog.style.display = 'block';
 
         name = localStorage.getItem('username');
-
-        // socket.emit('channel', localStorage.getItem('username'));
       }
 
+      // Gère le titre : le nom de la room sélectionnée
       function outputRoomName(room) {
         roomName.innerText = "";
         roomName.innerText = room.room;
       }
 
+      // ne sert plus à rien mais j'ai peur de le supprimer
+      // je le ferai quand j'aurai plus de temps
       function outputUsers(user, users) {
         ongletStream.innerHTML = '';
         console.log(users);
@@ -316,27 +309,6 @@
         console.log(messages);
       }
 
-      // function outputUsers(users){
-      //   let i = 1;
-      //   let temp = "";
-      //   console.log(users);
-      //   for(let i=1; i <= users.length ; i++){
-      //     temp += '<li><button value="room '+ i +'" >' + users[i-1].username + '</button></li>';
-      //   }
-      //   ongletStream.innerHTML = temp;
- 
-      // }
-      // socket.on('channel', function(user){
-      //   console.log('ok');
-      //   let li = ongletStream.appendChild(document.createElement('li'));
-      //   li.textContent = user;
-      //   li.style.listStyle = "none";
-      //   li.style.padding = "5px";
-      //   li.style.borderRadius = "5px";
-      //   li.style.backgroundColor = "lightgray";
-      //   li.style.margin = "5px";
-      //   li.style.display = "inline";
-      // })
     </script>
   </body>
 </html>
