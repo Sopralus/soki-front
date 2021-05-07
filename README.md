@@ -18,12 +18,15 @@ Les différents chats sont alors en dur dans le html.
 
 
 Concernant le stream :
+Un npm install est nécessaire dans le rep /auth pour que les
+streams fonctionnent.
 il y a un fichier conf dans /rtmp qui permet de gérer 
 la vidéo et sa création. 
 les vidéos sont envoyées dans un dossier /data et des extraits
 de la vidéo sont stockées pour revenir en arrière pendant le stream
 
 Pour streamer il faut :
+Lancer docker depuis la racine.
 - serveur : rtmp://localhost:1935/live
 - clef : room[numero]?key=supersecret
 Etant donné qu'il existe 5 channels codés en dur, on peut donc stream
