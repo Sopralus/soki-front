@@ -5,40 +5,56 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Stream</title>
+    <link href="main.css" rel="stylesheet">
   </head>
   <body>
     <header>
-    <h1 id="bonjour-prenom"></h1>
-    <form action="" method="post" id="sign-up-form">
-      <p>Sign up</p>
-      <input type="text" name="username">
-      <input type="text" name="password">
-      <button type="submit">Envoyer</button>
-    </form>
+      <div class="logo">
+        <h1>Soki</h1>
+        <span id="bonjour-prenom"></span>
+      </div>
+      <form action="" method="post" id="sign-up-form" class='sign-form'>
+        <p>Sign up</p>
+        <input type="text" name="username">
+        <input type="text" name="password">
+        <button type="submit">Envoyer</button>
+      </form>
 
-    <form action="" method="GET" id="sign-in-form">
-      <p>Sign in</p>
-      <input type="text" name="username-in">
-      <input type="text" name="password-in">
-      <button type="submit">Envoyer</button>
-    </form>
+      <form action="" method="GET" id="sign-in-form" class='sign-form'>
+        <p>Sign in</p>
+        <input type="text" name="username-in">
+        <input type="text" name="password-in">
+        <button type="submit">Envoyer</button>
+      </form>
 
-    <a style='display: none;' id="unlog" href="#">Se déconnecter</a>
+      <a style='display: none;' id="unlog" href="#">Se déconnecter</a>
     </header>
 
-
-    <h2>Live Stream</h2>
-
-    <section style="display: flex;">
+    <section class="groupes-stream">
+      <h2 id='room-name'>Live Stream</h2>
       <ul id="stream-onglet">
+        <li><button class="onglet" value="room1">Streamer1</button></li>
+        <li><button class="onglet" value="room2">Streamer2</button></li>
+        <li><button class="onglet" value="room3">Streamer3</button></li>
+        <li><button class="onglet" value="room4">Streamer4</button></li>
+        <li><button class="onglet" value="room5">Streamer5</button></li>
       </ul>
+    </section>
+
+    <section class="main">
+      
       <video id="video" width="800" controls></video>
-      <video width="800" controls></video>
 
       <!-- Le chat qui marchera peut être un jour -->
-      <div style="width: 300px;">
-        <ul id="messages" style="height: 100%; background-color: lightgray; padding:10px"></ul>
-        <form id="chat-form" action="">
+      <div class="chat-space">
+        <div id="rooms">
+          <ul id="room1" class="chat" ></ul>
+          <ul id="room2" class="chat"></ul>
+          <ul id="room3" class="chat"></ul>
+          <ul id="room4" class="chat"></ul>
+          <ul id="room5" class="chat"></ul>  
+        </div>
+        <form id="chat-form" action="" class="chat-form">
           <input id="chat-input" autocomplete="off" />
           <button>Send</button>
         </form>
@@ -48,36 +64,29 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Or if you want a more recent alpha version -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
-    <script src="../../../soki/soki-back/node_modules/socket.io/client-dist/socket.io.js"></script>
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.10.1/qs.min.js" integrity="sha512-aTKlYRb1QfU1jlF3k+aS4AqTpnTXci4R79mkdie/bp6Xm51O5O3ESAYhvg6zoicj/PD6VYY0XrYwsWLcvGiKZQ==" crossorigin="anonymous"></script>
+    <!-- <script src="../../../soki/soki-back/node_modules/socket.io/client-dist/socket.io.js"></script> -->
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script type="text/javascript">
 
       let bonjour = document.getElementById("bonjour-prenom");
       const formin = document.getElementById("sign-in-form");
       const formup = document.getElementById("sign-up-form");
+      const roomName = document.getElementById('room-name');
+      const rooms = document.getElementById('rooms');
+      const ongletStream = document.getElementById("stream-onglet");
       var unlog = document.getElementById('unlog');
-      var randStreamKey = Math.random().toString(20).substr(2, 10);
+      var randStreamKey = Math.random().toString(20).substr(2, 10); 
+      let name = "anonymous";
 
       if(localStorage.getItem('username')){
         bonjour.textContent = 'Bonjour ' + localStorage.getItem('username');
+        name = localStorage.getItem('username');
+        // socket.emit('username', localStorage.getItem('username'));
         removeForms();
       }
 
-      unlog.addEventListener('click', function() {
-        localStorage.removeItem('username');
-        localStorage.removeItem('streamkey');
-        localStorage.removeItem('id');
-        document.location.reload();
-      })
-
-      function removeForms(){
-        formup.style.display = "none";
-        formin.style.display = "none";
-        unlog.style.display = 'block';
-      }
-
-      
-      let ongletStream = document.getElementById("stream-onglet");
+      const onglets = document.getElementsByClassName('onglet');      
             
       var video = document.getElementById("video");
       var videoSrc = "http://localhost:8080/hls/robin.m3u8";
@@ -90,7 +99,100 @@
         video.src = videoSrc;
       }
 
+      
+      // Partie sur le chat
+      var socket = io("http://localhost:3000", {
+        withCredentials: true,
+        "Access-Control-Allow-Credentials": true
+      });
+      var room = 'room1';
 
+      // socket.on('id', (id) => {
+      //   room = id;
+      // });
+
+      var messages = document.getElementById(room);
+      var formchat = document.getElementById('chat-form');
+      var inputchat = document.getElementById('chat-input');
+
+      socket.emit('username', name);
+      socket.emit('joinRoom', { name, room });
+
+      for(let i = 0 ; i < onglets.length ; i++){
+        onglets[i].addEventListener('click', function(e){
+          e.preventDefault();
+          room = this.value;
+
+          let oldroom = messages;
+          oldroom.style.display= "none";
+          messages = document.getElementById(room);
+          messages.style.display = "block";
+
+          oldroomv = oldroom.id;
+
+          socket.emit('leaveRoom', oldroomv);
+          socket.emit('username', name);
+          socket.emit('joinRoom', { name, room });
+
+          videoSrc = "http://localhost:8080/hls/" + room + ".m3u8";
+          if (Hls.isSupported()) {
+            var hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+          }
+          else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = videoSrc;
+      }
+
+
+          //document.location = "http://localhost/soki/soki-front/rtmp/index.html?room=" + room;
+        })
+      }
+
+      socket.on('roomUsers', ( room ) => {
+        outputRoomName(room);
+      });
+
+      socket.on('allUsers', ({ room, users }) =>{
+        // outputUsers(room, users);
+      })
+      
+
+      formchat.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (inputchat.value) {
+          socket.emit('chat message', inputchat.value);
+          inputchat.value = '';
+        }
+      });
+
+      socket.on('chat message', function(msg) {
+        var item = document.createElement('li');
+        item.style.listStyle = "none";
+        item.style.marginBottom = '5px';
+        item.innerHTML = 
+          "<p style='margin:0; font-size:12px'>" + msg.username + 
+          "<span style='margin-left:5px; color:salmon'> " + msg.time + 
+          "</span></p><p style='margin:0'>" + msg.text + "</p>";
+        messages = document.getElementById(room);
+        messages.appendChild(item);
+        messages.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on('message', message => {
+        var item = document.createElement('li');
+        item.style.listStyle = "none";
+        item.style.marginBottom = '5px';
+        item.innerHTML = 
+          "<p style='margin:0; font-size:12px'>" + message.username + 
+          "<span style='margin-left:5px; color:salmon'> " + message.time + 
+          "</span></p><p style='margin:0'>" + message.text + "</p>";
+        messages = document.getElementById(room);
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      })
+
+      // forms
       const apiup = "http://localhost:3000/users";
       formup.addEventListener('submit', (e) =>{
         e.preventDefault();
@@ -111,6 +213,9 @@
           localStorage.setItem('streamkey', res.streamkey);
           localStorage.setItem('id', res._id);
           removeForms();
+          socket.emit('username', localStorage.getItem('username'));
+          socket.emit('leaveRoom');
+          socket.emit('joinRoom', { name, room });
         });
       });
 
@@ -142,37 +247,96 @@
             localStorage.setItem('streamkey', res.streamkey);
             localStorage.setItem('id', res._id);
             removeForms();
+            socket.emit('username', localStorage.getItem('username'));
+            socket.emit('leaveRoom');
+            socket.emit('joinRoom', { name, room });
+
           })
         });
       });
 
       
-      // Partie sur le chat
-      var socket = io("http://localhost:3000", {
-        withCredentials: true,
-        "Access-Control-Allow-Credentials": true
-      });
-
-      var messages = document.getElementById('messages');
-      var formchat = document.getElementById('chat-form');
-      var inputchat = document.getElementById('chat-input');
-
-      formchat.addEventListener('submit', function(e) {
+      unlog.addEventListener('click', function(e) {
         e.preventDefault();
-        if (inputchat.value) {
-          socket.emit('chat message', inputchat.value);
-          inputchat.value = '';
-        }
-      });
+        socket.emit('leaveRoom', room);
+        console.log(room);
 
-      socket.on('chat message', function(msg) {
-        var item = document.createElement('li');
-        item.style.listStyle = "none";
-        item.innerHTML = "<p style='margin:0; color:blue; font-size:12px'>" + localStorage.getItem('username') + "</p><p style='margin:0'>" + msg + "</p>";
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-      });
+        localStorage.removeItem('username');
+        localStorage.removeItem('streamkey');
+        localStorage.removeItem('id');
 
+        socket.emit('name', "anonymous");
+        socket.emit('joinRoom', { name, room });
+
+        document.location.reload();
+
+      })
+
+      function removeForms(){
+        formup.style.display = "none";
+        formin.style.display = "none";
+        unlog.style.display = 'block';
+
+        name = localStorage.getItem('username');
+
+        // socket.emit('channel', localStorage.getItem('username'));
+      }
+
+      function outputRoomName(room) {
+        roomName.innerText = "";
+        roomName.innerText = room.room;
+      }
+
+      function outputUsers(user, users) {
+        ongletStream.innerHTML = '';
+        console.log(users);
+        users.forEach((user) => {
+          const li = document.createElement('li');
+          const btn = document.createElement('button');
+          let button = li.appendChild(btn);
+          button.innerText = user.username;
+          button.value= user.username;
+
+          button.addEventListener('click', function(e){
+            e.preventDefault;
+            socket.emit('leaveRoom');
+            socket.emit('joinRoom', { name, room });
+          })
+
+          ongletStream.appendChild(li);
+        });
+
+        let oneRoom = rooms.appendChild(document.createElement('ul'));
+        oneRoom.id = user.id;
+        oneRoom.style.height = "100%" ;
+        oneRoom.style.backgroundColor = "lightgray"; 
+        oneRoom.style.panning = "10px";
+
+        messages = document.getElementById(room);
+        console.log(messages);
+      }
+
+      // function outputUsers(users){
+      //   let i = 1;
+      //   let temp = "";
+      //   console.log(users);
+      //   for(let i=1; i <= users.length ; i++){
+      //     temp += '<li><button value="room '+ i +'" >' + users[i-1].username + '</button></li>';
+      //   }
+      //   ongletStream.innerHTML = temp;
+ 
+      // }
+      // socket.on('channel', function(user){
+      //   console.log('ok');
+      //   let li = ongletStream.appendChild(document.createElement('li'));
+      //   li.textContent = user;
+      //   li.style.listStyle = "none";
+      //   li.style.padding = "5px";
+      //   li.style.borderRadius = "5px";
+      //   li.style.backgroundColor = "lightgray";
+      //   li.style.margin = "5px";
+      //   li.style.display = "inline";
+      // })
     </script>
   </body>
 </html>
