@@ -34,3 +34,10 @@ avec la clef room1?key=supersecret
 Notre objectif était de créer les channels selon les streams en cours 
 et faire une vérification avec une "streamkey" enregistrée en BDD
 mais nous n'avons pas réussi / eu le temps
+
+Ce qu'on peut faire :
+- streamer une vidéo sur un channel prédéfini
+- regarder la vidéo et envoyer des messages 
+- changer de "channel" et accéder à un nouveau chat
+- se connecter / s'inscrire
+- envoyer des messages même si on n'est pas connectés
